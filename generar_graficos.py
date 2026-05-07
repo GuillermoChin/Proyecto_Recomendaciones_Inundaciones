@@ -45,12 +45,13 @@ df['C'] = df['C'].astype(str).str.strip()
 for i, row in df.iterrows():
     color = colores_cuadrante.get(row['C'], 'gray')
     ax1.scatter(row['ICI_Comp'], row['IVS'], color=color, s=100, edgecolors='black', zorder=3)
-    ax1.annotate(f"{row['Municipio']} ({row['C']})", 
-             (row['ICI_Comp'], row['IVS']),
-                 (row['ICI_Comp'], row['IVS']), 
+    # Etiquetar cada punto
+    ax1.annotate(text=f"{row['Municipio']} ({row['C']})", 
+                 xy=(row['ICI_Comp'], row['IVS']), 
+                 xytext=(10, -5),
                  textcoords="offset points", 
-                 xytext=(10,-5), 
-                 ha='left', fontsize=10)
+                 ha='left', 
+                 fontsize=10)
 
 # Líneas de corte (Medianas)
 ax1.axhline(y=median_ivs, color='black', linestyle='--', zorder=1)
@@ -102,7 +103,7 @@ p7 = ax3.barh(municipios, ici_com, left=ici_gen+ici_rsg, color='#74add1', edgeco
 ax3.set_title('C. DIAGNÓSTICO DE COMPONENTES DE CAPACIDAD (COMPOSICIÓN DEL ICI)', weight='bold')
 ax3.set_xlabel('SUMA DE ÍNDICES ICI', weight='bold')
 ax3.invert_yaxis()
-ax3.legend((p5[0], p6[0], p7[0]), ('ICI General (ICI_Gen)', 'ICI Riesgo (ICI_Rsg)', 'ICI Compuesto (ICI_Com)'), loc='lower right', fontsize=8)
+ax3.legend((p5[0], p6[0], p7[0]), ('ICI General (ICI_Gen)', 'ICI Riesgo (ICI_Rsg)', 'ICI Compuesto (ICI_Comp)'), loc='lower right', fontsize=8)
 
 # Ajustar el diseño y guardar la imagen
 plt.tight_layout()
