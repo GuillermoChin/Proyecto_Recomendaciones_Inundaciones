@@ -45,26 +45,30 @@ textos = []
 
 for i, row in df.iterrows():
     color_muni = colores(i)
-    # Dibujamos el punto y le asignamos un label para la leyenda
-    ax1.scatter(row['ICI_Comp'], row['IVS'], color=color_muni, s=250, 
-                edgecolors='black', zorder=5, label=row['Municipio'])
+    # Dibujamos el punto. Reducimos un poco la opacidad (alpha) 
+    # para que el nombre sea más fácil de leer si queda encima.
+    ax1.scatter(row['ICI_Comp'], row['IVS'], color=color_muni, s=300, 
+                edgecolors='black', zorder=3, alpha=0.7)
     
-    # Etiqueta en el punto (más pequeña para no saturar)
+    # Colocamos el nombre justo en la coordenada del punto
+    # 'ha' y 'va' al centro aseguran que esté justo "sobre" el punto
     t = ax1.text(row['ICI_Comp'], row['IVS'], row['Municipio'], 
-                 fontsize=11, weight='bold')
+                 fontsize=10, weight='bold', ha='center', va='center')
     textos.append(t)
 
-# adjust_text con parámetros para "empujar" las letras hacia afuera
+# Usamos adjust_text para evitar que los nombres se encimen entre sí,
+# pero configuramos para que se mantengan lo más cerca posible de los puntos.
 adjust_text(textos, ax=ax1, 
-            force_text=(1.0, 2.0), 
-            expand_points=(1.8, 1.8),
-            arrowprops=dict(arrowstyle='-', color='gray', lw=0.6, alpha=0.6))
+            only_move={'points':'y', 'text':'y'}, # Prioriza movimiento vertical si hay choque
+            force_text=0.5,
+            expand_points=(1.2, 1.2),
+            arrowprops=dict(arrowstyle='-', color='gray', lw=0.5, alpha=0.4))
 
 # Líneas de medianas de referencia
 ax1.axhline(0.459, color='black', linestyle=':', lw=1.5, alpha=0.5)
 ax1.axvline(0.361, color='black', linestyle=':', lw=1.5, alpha=0.5)
 
-# Zoom dinámico
+# Zoom dinámico con margen
 m_x, m_y = (df['ICI_Comp'].max()-df['ICI_Comp'].min())*0.15, (df['IVS'].max()-df['IVS'].min())*0.15
 ax1.set_xlim(df['ICI_Comp'].min()-m_x, df['ICI_Comp'].max()+m_x)
 ax1.set_ylim(df['IVS'].min()-m_y, df['IVS'].max()+m_y)
@@ -72,11 +76,6 @@ ax1.set_ylim(df['IVS'].min()-m_y, df['IVS'].max()+m_y)
 ax1.set_title('A. RELACIÓN CAPACIDAD (ICI) vs. RIESGO (IVS)', fontsize=18, weight='bold', pad=20)
 ax1.set_xlabel('Índice de Capacidad Institucional (ICI_Comp)', fontsize=14, weight='bold')
 ax1.set_ylabel('Índice de Vulnerabilidad Social (IVS)', fontsize=14, weight='bold')
-
-# LEYENDA DEL PANEL A (A la derecha del eje)
-# bbox_to_anchor=(1.05, 0.5) coloca la leyenda justo afuera a la derecha
-ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5), title="Municipios", 
-           fontsize=10, title_fontsize=12, frameon=True, shadow=True)
 
 # =========================================================
 # PANELES B Y C (Siguen igual, consistentes con la tabla)
