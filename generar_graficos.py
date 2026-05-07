@@ -7,7 +7,7 @@ import numpy as np
 # Asegúrate de que el archivo se llame exactamente así y esté en formato CSV.
 # Si es Excel, usa pd.read_excel('Datos/Tabla1.xlsx')
 try:
-    df = pd.read_csv('Datos/Tabla1.csv')
+    df = pd.read_csv('Datos/Tabla1.xlsx')
 except FileNotFoundError:
     print("Error: No se encontró el archivo. Asegúrate de que exista la carpeta 'Datos' y el archivo 'Tabla1.csv'")
     exit()
