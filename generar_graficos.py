@@ -7,7 +7,11 @@ import numpy as np
 # Asegúrate de que el archivo se llame exactamente así y esté en formato CSV.
 # Si es Excel, usa pd.read_excel('Datos/Tabla1.xlsx')
 try:
-    df = pd.read_csv('Datos/Tabla1.xlsx')
+    df = pd.read_excel('Datos/Tabla1.xlsx')
+    df = pd.read_excel('Datos/Tabla1.xlsx')
+    df.columns = df.columns.str.strip()
+    # Agrega esta línea para imprimir los nombres exactos:
+    print(df.columns.tolist())
 except FileNotFoundError:
     print("Error: No se encontró el archivo. Asegúrate de que exista la carpeta 'Datos' y el archivo 'Tabla1.csv'")
     exit()
@@ -40,10 +44,10 @@ df['C'] = df['C'].astype(str).str.strip()
 
 for i, row in df.iterrows():
     color = colores_cuadrante.get(row['C'], 'gray')
-    ax1.scatter(row['ICI_Com'], row['IVS'], color=color, s=100, edgecolors='black', zorder=3)
-    # Etiquetar cada punto
+    ax1.scatter(row['ICI_Comp'], row['IVS'], color=color, s=100, edgecolors='black', zorder=3)
     ax1.annotate(f"{row['Municipio']} ({row['C']})", 
-                 (row['ICI_Com'], row['IVS']), 
+             (row['ICI_Comp'], row['IVS']),
+                 (row['ICI_Comp'], row['IVS']), 
                  textcoords="offset points", 
                  xytext=(10,-5), 
                  ha='left', fontsize=10)
@@ -89,7 +93,7 @@ ax2.legend((p1[0], p2[0], p3[0], p4[0]), ('Sensibilidad Social (DIM_SS)', 'Expos
 # Nota: Apilar índices puede sumar > 1, es importante interpretar el total correctamente.
 ici_gen = df['ICI_Gen']
 ici_rsg = df['ICI_Rsg']
-ici_com = df['ICI_Com']
+ici_com = df['ICI_Comp']
 
 p5 = ax3.barh(municipios, ici_gen, color='#313695', edgecolor='white')
 p6 = ax3.barh(municipios, ici_rsg, left=ici_gen, color='#fdae61', edgecolor='white')
