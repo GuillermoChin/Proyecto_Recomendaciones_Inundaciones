@@ -1,113 +1,113 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-import numpy as np
+from adjustText import adjust_text
 
-# 1. Cargar los datos
-# Asegúrate de que el archivo se llame exactamente así y esté en formato CSV.
-# Si es Excel, usa pd.read_excel('Datos/Tabla1.xlsx')
+# 1. Crear carpeta Salidas si no existe
+os.makedirs('Salidas', exist_ok=True)
+
+# 2. Cargar los datos
 try:
     df = pd.read_excel('Datos/Tabla1.xlsx')
-    df = pd.read_excel('Datos/Tabla1.xlsx')
-    df.columns = df.columns.str.strip()
-    # Agrega esta línea para imprimir los nombres exactos:
-    print(df.columns.tolist())
 except FileNotFoundError:
-    print("Error: No se encontró el archivo. Asegúrate de que exista la carpeta 'Datos' y el archivo 'Tabla1.csv'")
+    print("Error: No se encontró el archivo. Asegúrate de que exista la carpeta 'Datos' y el archivo 'Tabla1.xlsx'")
     exit()
 
-# Limpiar posibles espacios en los nombres de las columnas
 df.columns = df.columns.str.strip()
 
-# 2. Configurar la figura y la cuadrícula (Layout)
-fig = plt.figure(figsize=(20, 10))
-fig.suptitle('ANÁLISIS COMPARATIVO DE RIESGO (IVS) Y CAPACIDAD (ICI) POR MUNICIPIO DE CAMPECHE', fontsize=18, weight='bold')
+# 3. Configurar la figura (Más vertical, menos horizontal)
+fig = plt.figure(figsize=(16, 14))
+fig.suptitle('ANÁLISIS COMPARATIVO DE RIESGO (IVS) Y CAPACIDAD (ICI) POR MUNICIPIO DE CAMPECHE', fontsize=20, weight='bold')
 
-# GridSpec permite hacer el Panel A más grande (ocupa la columna izquierda) y B/C apilados en la derecha
 gs = GridSpec(2, 2, width_ratios=[1.2, 1], height_ratios=[1, 1])
-gs.update(wspace=0.15, hspace=0.3)
+gs.update(wspace=0.20, hspace=0.35)
 
-ax1 = fig.add_subplot(gs[:, 0])    # Panel A: Izquierda, ocupa ambas filas
-ax2 = fig.add_subplot(gs[0, 1])    # Panel B: Derecha, fila superior
-ax3 = fig.add_subplot(gs[1, 1])    # Panel C: Derecha, fila inferior
+ax1 = fig.add_subplot(gs[:, 0])    
+ax2 = fig.add_subplot(gs[0, 1])    
+ax3 = fig.add_subplot(gs[1, 1])    
 
 # ---------------------------------------------------------
 # PANEL A: Análisis Sintético de Priorización (Dispersión)
 # ---------------------------------------------------------
 median_ivs = 0.459
 median_ici_comp = 0.361
-
-# Diccionario de colores para los cuadrantes
 colores_cuadrante = {'I': 'red', 'II': 'orange', 'III': 'gold', 'IV': 'green'}
-# Limpiar la columna C de espacios extras por si acaso
 df['C'] = df['C'].astype(str).str.strip() 
+
+textos = [] # Lista para guardar las etiquetas y acomodarlas luego
 
 for i, row in df.iterrows():
     color = colores_cuadrante.get(row['C'], 'gray')
-    ax1.scatter(row['ICI_Comp'], row['IVS'], color=color, s=100, edgecolors='black', zorder=3)
-    # Etiquetar cada punto
-    ax1.annotate(text=f"{row['Municipio']} ({row['C']})", 
-                 xy=(row['ICI_Comp'], row['IVS']), 
-                 xytext=(10, -5),
-                 textcoords="offset points", 
-                 ha='left', 
-                 fontsize=10)
+    ax1.scatter(row['ICI_Comp'], row['IVS'], color=color, s=150, edgecolors='black', zorder=3)
+    
+    # Crear el texto pero guardarlo en la lista en lugar de fijarlo
+    t = ax1.text(row['ICI_Comp'], row['IVS'], f"{row['Municipio']} ({row['C']})", fontsize=12, weight='bold')
+    textos.append(t)
 
-# Líneas de corte (Medianas)
+# Acomodar los textos automáticamente para que no se encimen (usa adjustText)
+adjust_text(textos, ax=ax1, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
+
 ax1.axhline(y=median_ivs, color='black', linestyle='--', zorder=1)
 ax1.axvline(x=median_ici_comp, color='black', linestyle='--', zorder=1)
 
-ax1.set_title('A. ANÁLISIS SINTÉTICO DE PRIORIZACIÓN: IVS vs. ICI_COMPUESTO', weight='bold')
-ax1.set_xlabel('ÍNDICE DE CAPACIDAD INSTITUCIONAL COMPUESTO (ICI_Comp)', weight='bold')
-ax1.set_ylabel('ÍNDICE DE VULNERABILIDAD SOCIAL (IVS) - RIESGO', weight='bold')
+ax1.set_title('A. ANÁLISIS SINTÉTICO DE PRIORIZACIÓN', fontsize=16, weight='bold')
+ax1.set_xlabel('ÍNDICE DE CAPACIDAD INSTITUCIONAL COMPUESTO (ICI_Comp)', fontsize=14, weight='bold')
+ax1.set_ylabel('ÍNDICE DE VULNERABILIDAD SOCIAL (IVS)', fontsize=14, weight='bold')
 ax1.set_xlim(0, 1.0)
 ax1.set_ylim(0, 0.8)
 ax1.grid(True, linestyle=':', alpha=0.6)
+ax1.tick_params(axis='both', labelsize=12)
 
-# Anotaciones de las medianas
-ax1.text(0.01, median_ivs + 0.01, f'MEDIANA DE CORTE IVS ({median_ivs})', weight='bold')
-ax1.text(median_ici_comp + 0.01, 0.02, f'MEDIANA DE CORTE\nICI_Comp ({median_ici_comp})', weight='bold')
+ax1.text(0.02, median_ivs + 0.01, f'MEDIANA DE CORTE IVS ({median_ivs})', fontsize=12, weight='bold')
+ax1.text(median_ici_comp + 0.01, 0.02, f'MEDIANA DE CORTE\nICI_Comp ({median_ici_comp})', fontsize=12, weight='bold')
 
 # ---------------------------------------------------------
-# PANEL B: Diagnóstico de Componentes de Riesgo (Barras Apiladas)
+# PANEL B: Diagnóstico de Riesgo (Fórmula IVS)
+# IVS = SS × 0.30 + EF × 0.25 + CA × 0.25 + GV × 0.20
 # ---------------------------------------------------------
 municipios = df['Municipio']
-dim_ss = df['DIM_SS']
-dim_ef = df['DIM_EF']
-dim_ca = df['DIM_CA']
-dim_gv = df['DIM_GV']
 
-# Crear barras apiladas
-p1 = ax2.barh(municipios, dim_ss, color='#a50026', edgecolor='white')
-p2 = ax2.barh(municipios, dim_ef, left=dim_ss, color='#f46d43', edgecolor='white')
-p3 = ax2.barh(municipios, dim_ca, left=dim_ss+dim_ef, color='#fee090', edgecolor='white')
-p4 = ax2.barh(municipios, dim_gv, left=dim_ss+dim_ef+dim_ca, color='#4575b4', edgecolor='white')
+# Aplicando las ponderaciones indicadas
+dim_ss_w = df['DIM_SS'] * 0.30
+dim_ef_w = df['DIM_EF'] * 0.25
+dim_ca_w = df['DIM_CA'] * 0.25
+dim_gv_w = df['DIM_GV'] * 0.20
 
-ax2.set_title('B. DIAGNÓSTICO DE COMPONENTES DE RIESGO (DIMENSIONES DEL IVS)', weight='bold')
-ax2.set_xlabel('IVS COMPUESTO', weight='bold')
-ax2.invert_yaxis() # Para que el primer municipio salga arriba
-ax2.legend((p1[0], p2[0], p3[0], p4[0]), ('Sensibilidad Social (DIM_SS)', 'Exposición Física (DIM_EF)', 'Capacidad Adaptativa (DIM_CA)', 'Grupos Vulnerables (DIM_GV)'), loc='lower right', fontsize=8)
+p1 = ax2.barh(municipios, dim_ss_w, color='#a50026', edgecolor='white')
+p2 = ax2.barh(municipios, dim_ef_w, left=dim_ss_w, color='#f46d43', edgecolor='white')
+p3 = ax2.barh(municipios, dim_ca_w, left=dim_ss_w+dim_ef_w, color='#fee090', edgecolor='white')
+p4 = ax2.barh(municipios, dim_gv_w, left=dim_ss_w+dim_ef_w+dim_ca_w, color='#4575b4', edgecolor='white')
+
+ax2.set_title('B. COMPOSICIÓN DEL IVS (VALORES PONDERADOS)', fontsize=14, weight='bold')
+ax2.set_xlabel('IVS TOTAL', fontsize=12, weight='bold')
+ax2.invert_yaxis() 
+ax2.tick_params(axis='both', labelsize=11)
+ax2.legend((p1[0], p2[0], p3[0], p4[0]), 
+           ('Sensibilidad Social (30%)', 'Exposición Física (25%)', 'Capacidad Adaptativa (25%)', 'Grupos Vulnerables (20%)'), 
+           loc='lower right', fontsize=10)
 
 # ---------------------------------------------------------
-# PANEL C: Diagnóstico de Componentes de Capacidad (Barras Apiladas)
+# PANEL C: Diagnóstico de Capacidad (Fórmula ICI_Comp)
+# ICI_Comp = ICI_Gen × 0.50 + ICI_Rsg × 0.50
 # ---------------------------------------------------------
-# Nota: Apilar índices puede sumar > 1, es importante interpretar el total correctamente.
-ici_gen = df['ICI_Gen']
-ici_rsg = df['ICI_Rsg']
-ici_com = df['ICI_Comp']
 
-p5 = ax3.barh(municipios, ici_gen, color='#313695', edgecolor='white')
-p6 = ax3.barh(municipios, ici_rsg, left=ici_gen, color='#fdae61', edgecolor='white')
-p7 = ax3.barh(municipios, ici_com, left=ici_gen+ici_rsg, color='#74add1', edgecolor='white')
+# Aplicando las ponderaciones indicadas
+ici_gen_w = df['ICI_Gen'] * 0.50
+ici_rsg_w = df['ICI_Rsg'] * 0.50
 
-ax3.set_title('C. DIAGNÓSTICO DE COMPONENTES DE CAPACIDAD (COMPOSICIÓN DEL ICI)', weight='bold')
-ax3.set_xlabel('SUMA DE ÍNDICES ICI', weight='bold')
+p5 = ax3.barh(municipios, ici_gen_w, color='#313695', edgecolor='white')
+p6 = ax3.barh(municipios, ici_rsg_w, left=ici_gen_w, color='#fdae61', edgecolor='white')
+
+ax3.set_title('C. COMPOSICIÓN DEL ICI_COMP (VALORES PONDERADOS)', fontsize=14, weight='bold')
+ax3.set_xlabel('ICI COMPUESTO', fontsize=12, weight='bold')
 ax3.invert_yaxis()
-ax3.legend((p5[0], p6[0], p7[0]), ('ICI General (ICI_Gen)', 'ICI Riesgo (ICI_Rsg)', 'ICI Compuesto (ICI_Comp)'), loc='lower right', fontsize=8)
+ax3.tick_params(axis='both', labelsize=11)
+ax3.legend((p5[0], p6[0]), ('ICI General (50%)', 'ICI Riesgo (50%)'), loc='lower right', fontsize=10)
 
-# Ajustar el diseño y guardar la imagen
+# Ajustar el diseño y guardar en la carpeta Salidas
 plt.tight_layout()
-plt.subplots_adjust(top=0.92) # Dar espacio al título principal
-plt.savefig('grafico_multipanel.png', dpi=300, bbox_inches='tight')
-print("¡Gráfico generado exitosamente y guardado como 'grafico_multipanel.png'!")
+plt.subplots_adjust(top=0.93) 
+plt.savefig('Salidas/grafico_multipanel.png', dpi=300, bbox_inches='tight')
+print("¡Gráfico generado exitosamente y guardado en 'Salidas/grafico_multipanel.png'!")
 plt.show()
