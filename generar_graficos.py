@@ -46,7 +46,14 @@ for i, row in df.iterrows():
     textos.append(t)
 
 # Acomodar los textos automáticamente para que no se encimen (usa adjustText)
-adjust_text(textos, ax=ax1, arrowprops=dict(arrowstyle="-", color='gray', lw=0.5))
+adjust_text(texts, 
+            ax=ax1, 
+            force_text=(0.5, 1.5),      # Aumenta la repulsión entre las etiquetas
+            force_points=(0.5, 1.5),    # Aumenta la repulsión entre etiqueta y punto
+            expand_points=(1.5, 1.5),   # Crea un "colchón" invisible alrededor de los puntos
+            expand_text=(1.5, 1.5),     # Crea un "colchón" invisible alrededor de los textos
+            max_iterations=2000,        # Le da a la computadora más intentos para acomodarlos
+            arrowprops=dict(arrowstyle='-', color='gray', lw=0.8, alpha=0.7))
 
 ax1.axhline(y=median_ivs, color='black', linestyle='--', zorder=1)
 ax1.axvline(x=median_ici_comp, color='black', linestyle='--', zorder=1)
